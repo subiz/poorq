@@ -6,10 +6,24 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/subiz/executor/v2"
 	"github.com/subiz/log"
 )
+
+var allQueues = []*Queue{}
+
+func init() {
+	go func() {
+		for {
+			time.Sleep(5 * time.Minute)
+			for _, queue := range allQueues {
+				queue.status()
+			}
+		}
+	}()
+}
 
 const NTHREAD = 10
 
@@ -48,9 +62,15 @@ func NewQueue(path string, cb func(data []byte)) *Queue {
 	if len(tasks) > 0 {
 		queue.tail = tasks[len(tasks)-1].Id
 	}
-
+	allQueues = append(allQueues, queue)
 	go queue.do()
 	return queue
+}
+
+func (queue *Queue) status() {
+	queue.Lock()
+	fmt.Println("QUEUE REPORT STATUS", queue.path, "PENDING TAKS:", len(queue.tasks), "TAIL:", queue.tail, "ISRUNNING", queue.isRunning)
+	queue.Unlock()
 }
 
 func (queue *Queue) do() {
