@@ -45,6 +45,7 @@ type Task struct {
 	Data []byte
 }
 
+// NewQueue creates new queue, do not call this function multiple times with the same <path>
 func NewQueue(path string, cb func(data []byte)) *Queue {
 	if path == "" {
 		path = "."
@@ -67,6 +68,7 @@ func NewQueue(path string, cb func(data []byte)) *Queue {
 	return queue
 }
 
+// status prints queue's current state to the stdout
 func (queue *Queue) status() {
 	queue.Lock()
 	fmt.Println("QUEUE REPORT STATUS", queue.path, "PENDING TAKS:", len(queue.tasks), "TAIL:", queue.tail, "ISRUNNING", queue.isRunning)
@@ -100,6 +102,7 @@ func (queue *Queue) do() {
 	queue.Unlock()
 }
 
+// Push adds a new task the the queue
 func (queue *Queue) Push(data []byte) (int64, error) {
 	queue.Lock()
 	defer queue.Unlock()
