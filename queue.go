@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/subiz/executor/v2"
 	"github.com/subiz/log"
 )
 
@@ -87,15 +86,17 @@ func (queue *Queue) do() {
 		tasks := queue.tasks
 		queue.tasks = nil
 		queue.Unlock()
-		executor.Async(len(tasks), func(i int, _ *sync.Mutex) {
-			defer func() {
-				if r := recover(); r != nil {
-					log.EServer(nil, log.M{"r": r, "path": queue.path})
-				}
-			}()
-			queue.cb(tasks[i].Data)
-			CommitTaskToDisk(queue.path, tasks[i].Id)
-		}, NTHREAD)
+		for _, task := range tasks {
+			go func(task Task) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.EServer(nil, log.M{"r": r, "path": queue.path})
+					}
+				}()
+				queue.cb(task.Data)
+				CommitTaskToDisk(queue.path, task.Id)
+			}(task)
+		}
 		queue.Lock()
 	}
 	queue.isRunning = false
