@@ -1,5 +1,5 @@
 # PoorQ
-Poorly designed but very simple persistent task queue
+Poorly designed but dead simple persistent task queue
 
 ## Design
 
